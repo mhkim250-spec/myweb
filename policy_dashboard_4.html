@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>정책 모니터링 대시보드</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root{
+  --bg: #F6F3EC;
+  --glass: rgba(255,255,255,0.66);
+  --glass-strong: rgba(255,255,255,0.86);
+  --glass-border: rgba(255,255,255,0.92);
+  --line: rgba(24,28,38,0.09);
+  --line-soft: rgba(24,28,38,0.06);
+  --ink: #191D27;
+  --ink-dim: #676F80;
+  --ink-faint: #9BA2AE;
+  --c-assembly: #2A5FD9;
+  --c-assembly-tint: rgba(42,95,217,0.09);
+  --c-kcci: #BC7418;
+  --c-kcci-tint: rgba(188,116,24,0.11);
+  --c-climate: #178A63;
+  --c-climate-tint: rgba(23,138,99,0.10);
+  --ui: #191D27;
+  --ui-hover: #2C3242;
+  --danger: #C6453F;
+  --radius: 20px;
+  --radius-sm: 12px;
+  --korean: 'Pretendard Variable', Pretendard, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --display: 'Fraunces', var(--korean);
+  --mono: 'Space Grotesk', var(--korean);
+  --body: 'Inter', var(--korean);
+}
+
+*{ box-sizing: border-box; }
+html,body{ margin:0; padding:0; }
+body{
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse 900px 480px at 88% -10%, rgba(188,116,24,0.10), transparent 60%),
+    radial-gradient(ellipse 700px 480px at -6% 8%, rgba(42,95,217,0.08), transparent 55%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.022'/></svg>");
+  color: var(--ink);
+  font-family: var(--body);
+  min-height: 100vh;
+  padding: 0 0 60px;
+}
+
+.wrap{ max-width: 1280px; margin: 0 auto; padding: 0 28px; }
+
+/* ---------- Hero ---------- */
+.hero{ position: relative; overflow: hidden; margin-bottom: 8px; }
+.hero-illustration{ display:block; width:100%; height: 200px; }
+.hero-overlay{ position:absolute; inset:0; background: linear-gradient(180deg, rgba(246,243,236,0) 0%, rgba(246,243,236,0.58) 60%, var(--bg) 100%); }
+.hero-content{ position: relative; max-width: 1280px; margin: 0 auto; padding: 32px 28px 26px; display:flex; justify-content:space-between; align-items:flex-end; gap:20px; flex-wrap: wrap; }
+
+.eyebrow-row{ display:flex; align-items:center; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
+.eyebrow{ font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.18em; font-weight:600; color: var(--c-kcci); text-transform: uppercase; }
+.gs-badge{ display:flex; align-items:center; gap:7px; background: var(--glass-strong); border:1px solid var(--glass-border); padding: 4px 11px 4px 5px; border-radius: 100px; backdrop-filter: blur(10px); }
+.gs-mark{ width:16px; height:16px; border-radius:50%; background: conic-gradient(from 200deg, #E4372B, #F09819, #1B9C6E, #2A5FD9, #E4372B); }
+.gs-badge span{ font-family: var(--mono); font-size: 11px; font-weight:600; color: var(--ink-dim); letter-spacing:.02em; }
+
+h1{ font-family: var(--display); font-weight: 600; font-size: 38px; font-optical-sizing: auto; margin: 0 0 8px; color: var(--ink); letter-spacing: -0.01em; line-height:1.1; }
+.subtitle{ color: var(--ink-dim); font-size: 14.5px; max-width: 480px; line-height:1.55; font-style:italic; font-family: var(--display); font-weight:500; }
+
+.header-actions{ display:flex; align-items:center; gap:10px; }
+.sync-time{ font-family: var(--mono); font-size: 12px; color: var(--ink-faint); margin-right: 4px; text-align:right; }
+.sync-time span{ display:block; color: var(--ink-dim); font-weight:600; }
+
+button{ font-family: var(--korean); cursor:pointer; }
+.btn{ background: var(--glass-strong); border: 1px solid var(--glass-border); color: var(--ink); padding: 10px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; display:flex; align-items:center; gap:7px; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 1px 2px rgba(24,28,38,0.04); transition: all .15s ease; }
+.btn:hover{ background:#fff; box-shadow: 0 6px 16px rgba(24,28,38,0.09); transform: translateY(-1px); }
+.btn:active{ transform: translateY(0px); }
+.btn.primary{ background: var(--ui); color:#fff; border-color: var(--ui); }
+.btn.primary:hover{ background: var(--ui-hover); }
+.btn.icon-only{ padding:10px 12px; }
+
+/* ---------- Stats ---------- */
+.stats{ display:grid; grid-template-columns: repeat(4, 1fr); gap:16px; margin: 26px 0; }
+.stat-tile{ background: var(--glass); border: 1px solid var(--glass-border); border-radius: var(--radius); padding: 18px 20px; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 1px 2px rgba(24,28,38,0.03); position:relative; overflow:hidden; }
+.stat-tile::after{ content:''; position:absolute; right:-24px; top:-24px; width:70px; height:70px; border-radius:50%; background: var(--stat-color, transparent); opacity:0.07; }
+.stat-tile .stat-label{ font-size:12px; color: var(--ink-dim); font-weight:600; display:flex; align-items:center; gap:7px; margin-bottom:9px; }
+.stat-tile .stat-value{ font-family: var(--mono); font-size:30px; font-weight:600; color: var(--ink); }
+.stat-dot{ width:7px; height:7px; border-radius:50%; }
+
+/* ---------- Settings ---------- */
+.settings{ background: var(--glass-strong); border: 1px solid var(--glass-border); border-radius: var(--radius); padding: 22px 24px; margin-bottom: 26px; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); display:none; }
+.settings.open{ display:block; }
+.settings h3{ margin:0 0 4px; font-size:14px; font-family: var(--mono); letter-spacing:.02em; color: var(--ink); }
+.settings .hint{ color: var(--ink-faint); font-size:12px; margin-bottom:18px; line-height:1.6; }
+.grid-2{ display:grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+.field label{ display:block; font-size:12px; color: var(--ink-dim); margin-bottom:6px; font-weight:600; }
+.field input{ width:100%; background: #fff; border:1px solid var(--line); color: var(--ink); padding: 10px 12px; border-radius:9px; font-size:13px; font-family: var(--body); }
+.field input:focus{ outline: none; border-color: var(--c-assembly); }
+.pw-row{ display:flex; gap:8px; }
+.pw-row input{ flex:1; }
+.settings-footer{ display:flex; justify-content:flex-end; gap:10px; padding-top: 8px; border-top: 1px solid var(--line-soft); margin-top: 8px; }
+
+/* ---------- Board / cards ---------- */
+.board{ display:grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items:start; }
+@media (max-width: 980px){ .board{ grid-template-columns: 1fr; } .grid-2{ grid-template-columns: 1fr; } .stats{ grid-template-columns: 1fr 1fr; } h1{ font-size:28px; } }
+
+.card{ background: var(--glass); border: 1px solid var(--glass-border); border-radius: var(--radius); overflow: hidden; display:flex; flex-direction:column; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 1px 3px rgba(24,28,38,0.04); transition: box-shadow .2s ease, transform .2s ease; }
+.card:hover{ box-shadow: 0 14px 30px rgba(24,28,38,0.09); transform: translateY(-2px); }
+.card-head{ padding: 18px 20px 15px; display:flex; align-items:center; justify-content:space-between; border-bottom: 1px solid var(--line-soft); position:relative; }
+.card-head::before{ content:''; position:absolute; left:0; top:0; width:100%; height:3px; background: var(--card-color); }
+.card-title{ display:flex; align-items:center; gap:11px; }
+.card-icon{ width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; background: var(--card-tint); font-size: 16px; }
+.card-title h2{ font-size:15.5px; margin:0; font-family: var(--korean); font-weight:700; color: var(--ink); }
+.card-title .count{ font-family: var(--mono); font-size:11px; color: var(--card-color); font-weight:600; margin-top:3px; }
+.status{ display:flex; align-items:center; gap:8px; }
+.status-dot{ width:7px; height:7px; border-radius:50%; background: #D8DCE3; }
+.status-dot.loading{ background: var(--c-kcci); animation: pulse 1s infinite ease-in-out; }
+.status-dot.ok{ background: var(--c-climate); }
+.status-dot.err{ background: var(--danger); }
+@keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:.35; } }
+.icon-btn{ background:none; border:none; color: var(--ink-dim); padding:6px; border-radius:8px; display:flex; align-items:center; justify-content:center; }
+.icon-btn:hover{ background: rgba(24,28,38,0.06); color: var(--ink); }
+
+.card-body{ padding: 6px 8px 10px; flex:1; }
+
+/* Event list rows - fixes the long-title overflow issue */
+.event-list{ display:flex; flex-direction:column; }
+.event-row{ display:flex; gap:12px; padding: 13px 12px; border-radius: var(--radius-sm); transition: background .15s ease; }
+.event-row:hover{ background: rgba(24,28,38,0.035); }
+.event-num{ font-family: var(--mono); font-size: 11px; font-weight:600; color: var(--card-color, var(--ink-faint)); opacity:0.75; padding-top:2px; flex-shrink:0; width:20px; }
+.event-main{ min-width:0; flex:1; }
+.event-title{ font-size: 13.5px; font-weight:600; color: var(--ink); line-height:1.4; cursor:pointer; }
+.event-title.clamp{ display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.event-meta{ margin-top:6px; display:flex; flex-wrap:wrap; gap:6px 10px; align-items:center; }
+.meta-chip{ font-size:11.5px; color: var(--ink-dim); display:inline-flex; align-items:center; gap:4px; white-space:nowrap; }
+.meta-link{ font-size:11.5px; font-weight:600; color: var(--card-color, var(--c-assembly)); text-decoration:none; display:inline-flex; align-items:center; gap:4px; }
+.meta-link:hover{ text-decoration:underline; }
+.event-divider{ height:1px; background: var(--line-soft); margin: 0 12px; }
+
+.empty, .loading-msg, .error-box{ padding: 30px 18px; text-align:center; color: var(--ink-faint); font-size:13px; }
+.error-box{ color: var(--danger); }
+.error-box .retry{ margin-top:10px; }
+.skel-row{ display:flex; gap:12px; padding:13px 12px; }
+.skel{ height:10px; border-radius:5px; background: linear-gradient(90deg, var(--line-soft) 25%, rgba(24,28,38,0.11) 50%, var(--line-soft) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; flex:1; }
+@keyframes shimmer{ 0%{ background-position: 200% 0; } 100%{ background-position: -200% 0; } }
+
+.raw-toggle{ padding: 4px 20px 16px; }
+.raw-toggle summary{ cursor:pointer; font-size:11px; color: var(--ink-faint); }
+.raw-toggle pre{ margin-top:8px; background: rgba(24,28,38,0.04); border: 1px solid var(--line-soft); border-radius:8px; padding:10px 12px; font-size:11px; color: var(--ink-dim); white-space: pre-wrap; word-break: break-word; max-height:220px; overflow:auto; }
+
+.global-raw{ margin-top:24px; background: var(--glass); border: 1px solid var(--glass-border); border-radius: var(--radius); padding: 16px 20px; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+.global-raw summary{ cursor:pointer; font-size:12px; color: var(--ink-dim); font-weight:600; }
+.global-raw pre{ margin-top:10px; background: rgba(24,28,38,0.04); border: 1px solid var(--line-soft); border-radius:8px; padding:12px 14px; font-size:12px; color: var(--ink-dim); white-space: pre-wrap; word-break: break-word; max-height:320px; overflow:auto; }
+
+.footer-note{ margin-top:28px; font-size:12px; color: var(--ink-faint); text-align:center; line-height:1.7; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <svg class="hero-illustration" viewBox="0 0 1600 260" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#EAF1FB"/>
+        <stop offset="45%" stop-color="#F7E8CF"/>
+        <stop offset="100%" stop-color="#FBEFDA"/>
+      </linearGradient>
+      <radialGradient id="sun" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#FFF3D9" stop-opacity="0.95"/>
+        <stop offset="60%" stop-color="#F8D48C" stop-opacity="0.5"/>
+        <stop offset="100%" stop-color="#F8D48C" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect width="1600" height="260" fill="url(#sky)"/>
+    <circle cx="1180" cy="150" r="130" fill="url(#sun)"/>
+    <circle cx="1180" cy="150" r="30" fill="#FFF7E6" opacity="0.9"/>
+    <g opacity="0.75" stroke="#191D27" stroke-width="1">
+      <line x1="0" y1="196" x2="1600" y2="196" stroke-opacity="0.10"/>
+      <line x1="0" y1="216" x2="1600" y2="216" stroke-opacity="0.08"/>
+      <line x1="0" y1="236" x2="1600" y2="236" stroke-opacity="0.06"/>
+    </g>
+    <g fill="#26344A" opacity="0.55">
+      <path d="M120 226 C110 160 150 122 165 122 C180 122 220 160 210 226 Z"/>
+      <path d="M230 226 C220 150 268 106 285 106 C302 106 350 150 340 226 Z"/>
+      <ellipse cx="172" cy="100" rx="18" ry="11" opacity="0.5"/>
+      <ellipse cx="150" cy="78" rx="24" ry="13" opacity="0.32"/>
+      <ellipse cx="288" cy="80" rx="20" ry="12" opacity="0.5"/>
+      <ellipse cx="270" cy="56" rx="27" ry="14" opacity="0.3"/>
+    </g>
+    <g fill="#26344A" opacity="0.48">
+      <rect x="430" y="168" width="6" height="58"/>
+      <path d="M410 168 L456 168 L446 184 L420 184 Z"/>
+      <line x1="418" y1="173" x2="448" y2="173"/>
+      <line x1="416" y1="200" x2="450" y2="200"/>
+      <rect x="560" y="173" width="6" height="53"/>
+      <path d="M540 173 L586 173 L576 188 L550 188 Z"/>
+      <rect x="690" y="178" width="6" height="48"/>
+      <path d="M672 178 L714 178 L705 192 L681 192 Z"/>
+    </g>
+    <g stroke="#26344A" stroke-opacity="0.38" stroke-width="1.5" fill="none">
+      <line x1="436" y1="168" x2="563" y2="173"/>
+      <line x1="436" y1="180" x2="563" y2="185"/>
+      <line x1="566" y1="173" x2="693" y2="178"/>
+    </g>
+    <g fill="#26344A" opacity="0.5">
+      <rect x="1350" y="120" width="4" height="106"/>
+      <path d="M1352 120 L1400 172 L1352 158 Z"/>
+      <path d="M1352 120 L1310 162 L1352 152 Z"/>
+      <path d="M1352 120 L1352 68 L1358 120 Z"/>
+    </g>
+    <g fill="#26344A" opacity="0.38">
+      <rect x="880" y="214" width="44" height="11" transform="skewX(-18)"/>
+      <rect x="933" y="214" width="44" height="11" transform="skewX(-18)"/>
+      <rect x="986" y="214" width="44" height="11" transform="skewX(-18)"/>
+      <rect x="900" y="196" width="44" height="11" transform="skewX(-18)"/>
+      <rect x="953" y="196" width="44" height="11" transform="skewX(-18)"/>
+      <rect x="1006" y="196" width="44" height="11" transform="skewX(-18)"/>
+    </g>
+  </svg>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div>
+      <div class="eyebrow-row">
+        <span class="eyebrow">Energy &amp; Policy Watch</span>
+        <div class="gs-badge"><span class="gs-mark"></span><span>GS E&amp;R · Public Affairs</span></div>
+      </div>
+      <h1>정책 · 이해관계자 행사 모니터링</h1>
+      <div class="subtitle">국회 · 대한상공회의소 · 기후위기대응위원회의 최신 행사를 한눈에</div>
+    </div>
+    <div class="header-actions">
+      <div class="sync-time" id="syncTime">마지막 동기화<span>-</span></div>
+      <button class="btn icon-only" id="settingsBtn" title="설정">⚙️</button>
+      <button class="btn primary" id="refreshAllBtn">전체 새로고침</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="stats" id="statsStrip">
+    <div class="stat-tile" style="--stat-color:var(--c-assembly)">
+      <div class="stat-label"><span class="stat-dot" style="background:var(--c-assembly)"></span>국회</div>
+      <div class="stat-value" id="stat-assembly">-</div>
+    </div>
+    <div class="stat-tile" style="--stat-color:var(--c-kcci)">
+      <div class="stat-label"><span class="stat-dot" style="background:var(--c-kcci)"></span>대한상공회의소</div>
+      <div class="stat-value" id="stat-kcci">-</div>
+    </div>
+    <div class="stat-tile" style="--stat-color:var(--c-climate)">
+      <div class="stat-label"><span class="stat-dot" style="background:var(--c-climate)"></span>기후위기대응위원회</div>
+      <div class="stat-value" id="stat-climate">-</div>
+    </div>
+    <div class="stat-tile" style="--stat-color:var(--ui)">
+      <div class="stat-label"><span class="stat-dot" style="background:var(--ui)"></span>전체 행사</div>
+      <div class="stat-value" id="stat-total">-</div>
+    </div>
+  </div>
+
+  <div class="settings" id="settingsPanel">
+    <h3>API 연결 설정</h3>
+    <div class="hint">
+      "행사 모니터링 자동화" 워크플로우는 한 번의 호출로 국회·대한상공회의소·기후위기대응위원회 데이터를 모두 조회해 하나의 답변으로 합쳐서 돌려줍니다.
+      이 대시보드는 그 답변 안의 표 3개를 각각의 카테고리로 자동 분류해서 보여줍니다.
+    </div>
+    <div class="grid-2">
+      <div class="field">
+        <label>API Base URL</label>
+        <input type="text" id="apiBase" value="https://api.holdings.miso.gs/ext/v1">
+      </div>
+      <div class="field">
+        <label>API Key</label>
+        <div class="pw-row">
+          <input type="password" id="apiKey" value="app-86dR4MJuFAYYJmbD3JMmfRD3">
+          <button class="btn icon-only" id="togglePw">👁</button>
+        </div>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="field">
+        <label>엔드포인트 경로</label>
+        <input type="text" id="endpointPath" value="/workflows/run">
+      </div>
+      <div class="field">
+        <label>사용자 식별자 (user)</label>
+        <input type="text" id="userId" value="policy-dashboard">
+      </div>
+    </div>
+    <div class="settings-footer">
+      <button class="btn" id="closeSettingsBtn">닫기</button>
+      <button class="btn primary" id="saveSettingsBtn">저장하고 새로고침</button>
+    </div>
+  </div>
+
+  <div class="board" id="board"></div>
+
+  <details class="global-raw">
+    <summary>워크플로우 전체 원본 응답 보기 (디버그용)</summary>
+    <pre id="rawAll">아직 요청하지 않았습니다.</pre>
+  </details>
+
+  <div class="footer-note">
+    "행사 모니터링 자동화" 워크플로우가 만든 결과를 항목 단위로 자동 분류해 보여줍니다. 제목을 클릭하면 전체 내용을 펼쳐볼 수 있어요.<br>
+    특정 카드가 비어 있거나 "표를 찾지 못했습니다"라고 뜨면, 위의 "워크플로우 전체 원본 응답 보기"를 펼쳐 실제 답변 형식을 확인해주세요.<br>
+    브라우저에서 외부 API로 직접 요청하는 구조이므로, 서버의 CORS 설정에 따라 요청이 차단될 수 있습니다. GS 배지는 공식 로고가 아닌, 브랜드 톤을 참고한 자체 제작 마크입니다.
+  </div>
+</div>
+
+<script>
+const CATEGORIES = [
+  { key:'assembly', label:'국회', icon:'🏛️', color:'var(--c-assembly)', tint:'var(--c-assembly-tint)',
+    contextHints: ['국회','의원','세미나','공청회'] },
+  { key:'kcci', label:'대한상공회의소', icon:'🏢', color:'var(--c-kcci)', tint:'var(--c-kcci-tint)',
+    contextHints: ['상공회의소','상의','대한상의','kcci'] },
+  { key:'climate', label:'기후위기대응위원회', icon:'🌍', color:'var(--c-climate)', tint:'var(--c-climate-tint)',
+    contextHints: ['기후위기','기후','탄소중립','위원회'] },
+];
+
+const state = {
+  apiBase: 'https://api.holdings.miso.gs/ext/v1',
+  apiKey: 'app-86dR4MJuFAYYJmbD3JMmfRD3',
+  endpointPath: '/workflows/run',
+  user: 'policy-dashboard',
+  counts: {}
+};
+
+const board = document.getElementById('board');
+
+function renderSkeleton(){
+  let rows = '';
+  for(let i=0;i<3;i++){
+    rows += `<div class="skel-row"><div class="skel" style="max-width:${60+Math.random()*30}%"></div></div>`;
+  }
+  return rows;
+}
+
+function cardTemplate(cat){
+  return `
+  <div class="card" style="--card-color:${cat.color}; --card-tint:${cat.tint}" id="card-${cat.key}">
+    <div class="card-head">
+      <div class="card-title">
+        <div class="card-icon">${cat.icon}</div>
+        <div>
+          <h2>${cat.label}</h2>
+          <div class="count" id="count-${cat.key}">대기중</div>
+        </div>
+      </div>
+      <div class="status">
+        <span class="status-dot" id="dot-${cat.key}"></span>
+        <button class="icon-btn" title="새로고침" onclick="fetchAll()">⟳</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="event-list" id="list-${cat.key}">
+        <div class="loading-msg">새로고침을 눌러 데이터를 불러오세요</div>
+      </div>
+    </div>
+    <details class="raw-toggle">
+      <summary>이 표의 원본 마크다운 보기</summary>
+      <pre id="raw-${cat.key}">아직 요청하지 않았습니다.</pre>
+    </details>
+  </div>`;
+}
+
+CATEGORIES.forEach(cat => { board.insertAdjacentHTML('beforeend', cardTemplate(cat)); });
+
+function setDot(key, mode){
+  document.getElementById('dot-'+key).className = 'status-dot' + (mode ? ' '+mode : '');
+}
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+}
+
+function iconFor(label){
+  if(/일시|날짜|개최일|date/i.test(label)) return '📅';
+  if(/장소/.test(label)) return '📍';
+  if(/주최/.test(label)) return '👥';
+  return '';
+}
+
+function buildRequest(){
+  return {
+    url: state.apiBase.replace(/\/$/,'') + state.endpointPath,
+    body: { inputs: {}, response_mode: 'blocking', user: state.user || 'policy-dashboard' }
+  };
+}
+
+function extractText(json){
+  if(typeof json.answer === 'string') return json.answer;
+  if(json.data && json.data.outputs){
+    const outs = json.data.outputs;
+    const firstStr = Object.values(outs).find(v => typeof v === 'string');
+    if(firstStr) return firstStr;
+  }
+  if(typeof json.text === 'string') return json.text;
+  if(typeof json.output === 'string') return json.output;
+  return JSON.stringify(json);
+}
+
+function isTableRow(line){ return /^\s*\|.*\|\s*$/.test(line); }
+function isSeparatorRow(cells){ return cells.length > 0 && cells.every(c => /^:?-{2,}:?$/.test(c.trim()) || c.trim()===''); }
+
+function splitMarkdownTables(text){
+  const lines = text.split(/\r?\n/);
+  const tables = [];
+  let i = 0;
+  while(i < lines.length){
+    if(isTableRow(lines[i])){
+      const start = i;
+      const block = [];
+      while(i < lines.length && isTableRow(lines[i])){ block.push(lines[i]); i++; }
+      let context = [];
+      for(let j = start-1; j>=0 && context.length<4; j--){
+        if(lines[j].trim()==='') continue;
+        context.unshift(lines[j]);
+      }
+      tables.push({ block, context: context.join(' ') });
+    } else { i++; }
+  }
+  return tables;
+}
+
+function parseTable(raw){
+  const rows = raw.block.map(l => l.trim().replace(/^\|/,'').replace(/\|$/,'').split('|').map(c=>c.trim()));
+  const dataRows = rows.filter(r => !isSeparatorRow(r));
+  const header = dataRows[0] || [];
+  const body = dataRows.slice(1).filter(r => r.some(c => c !== ''));
+  return { header, body, raw: raw.block.join('\n'), context: raw.context };
+}
+
+function classify(table){
+  const headerStr = table.header.join(' ');
+  const ctx = table.context;
+  for(const cat of CATEGORIES){
+    if(cat.contextHints.some(h => ctx.includes(h))) return cat.key;
+  }
+  if(/주최/.test(headerStr)) return 'climate';
+  if(/장소/.test(headerStr) && (/포스터|이미지|링크/.test(headerStr))) return 'assembly';
+  if(table.header.length <= 3) return 'kcci';
+  return null;
+}
+
+function processAnswer(answer){
+  const tables = splitMarkdownTables(answer).map(parseTable).filter(t => t.header.length > 0);
+  const assigned = {};
+  const unclassified = [];
+  tables.forEach(t => {
+    const cat = classify(t);
+    if(cat && !assigned[cat]) assigned[cat] = t;
+    else unclassified.push(t);
+  });
+  CATEGORIES.forEach(cat => {
+    if(!assigned[cat.key] && unclassified.length){ assigned[cat.key] = unclassified.shift(); }
+  });
+  return assigned;
+}
+
+function renderEventList(cat, table){
+  const list = document.getElementById('list-'+cat.key);
+  const countEl = document.getElementById('count-'+cat.key);
+  const rawEl = document.getElementById('raw-'+cat.key);
+
+  if(!table){
+    list.innerHTML = `<div class="empty">이 카테고리의 표를 찾지 못했습니다. 하단 "전체 원본 응답"을 확인해주세요.</div>`;
+    countEl.textContent = '확인 필요';
+    rawEl.textContent = '해당 카테고리의 표를 찾지 못했습니다.';
+    delete state.counts[cat.key];
+    setDot(cat.key, 'err');
+    return;
+  }
+
+  if(table.body.length === 0){
+    list.innerHTML = `<div class="empty">최근 등록된 행사가 없습니다</div>`;
+  } else {
+    const header = table.header;
+    list.innerHTML = table.body.map((row, i) => {
+      const title = (row[0] || '정보 없음').trim();
+      const metaParts = [];
+      for(let idx = 1; idx < header.length; idx++){
+        const label = header[idx] || '';
+        const val = (row[idx] || '').trim();
+        if(!val || /^정보\s*없음$/.test(val)) continue;
+        if(/^https?:\/\//.test(val)){
+          metaParts.push(`<a class="meta-link" href="${escapeHtml(val)}" target="_blank" rel="noopener">🔗 포스터 보기 ↗</a>`);
+        } else {
+          metaParts.push(`<span class="meta-chip">${iconFor(label)} ${escapeHtml(val)}</span>`);
+        }
+      }
+      const divider = i > 0 ? '<div class="event-divider"></div>' : '';
+      return `${divider}<div class="event-row">
+        <div class="event-num">${String(i+1).padStart(2,'0')}</div>
+        <div class="event-main">
+          <div class="event-title clamp" title="${escapeHtml(title)}" onclick="this.classList.toggle('clamp')">${escapeHtml(title)}</div>
+          <div class="event-meta">${metaParts.join('')}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  countEl.textContent = table.body.length + '건';
+  state.counts[cat.key] = table.body.length;
+  rawEl.textContent = table.raw;
+  setDot(cat.key, 'ok');
+}
+
+function updateTotals(){
+  CATEGORIES.forEach(cat => {
+    document.getElementById('stat-'+cat.key).textContent = (state.counts[cat.key] !== undefined) ? state.counts[cat.key] : '-';
+  });
+  const vals = CATEGORIES.map(c => state.counts[c.key]).filter(v => typeof v === 'number');
+  document.getElementById('stat-total').textContent = vals.length ? vals.reduce((a,b)=>a+b,0) : '-';
+}
+
+async function fetchAll(){
+  CATEGORIES.forEach(cat => {
+    setDot(cat.key, 'loading');
+    document.getElementById('count-'+cat.key).textContent = '불러오는 중...';
+    document.getElementById('list-'+cat.key).innerHTML = renderSkeleton();
+  });
+  document.getElementById('syncTime').innerHTML = '동기화 중...<span>-</span>';
+
+  const { url, body } = buildRequest();
+
+  try{
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + state.apiKey },
+      body: JSON.stringify(body)
+    });
+    const rawText = await res.text();
+    document.getElementById('rawAll').textContent = rawText;
+
+    if(!res.ok) throw new Error('HTTP ' + res.status + ' - 서버가 오류를 반환했습니다.');
+
+    let json;
+    try{ json = JSON.parse(rawText); }catch(e){ throw new Error('응답이 JSON 형식이 아닙니다.'); }
+
+    const answer = extractText(json);
+    const assigned = processAnswer(answer);
+    CATEGORIES.forEach(cat => renderEventList(cat, assigned[cat.key]));
+    updateTotals();
+
+  }catch(err){
+    let msg = err.message || '알 수 없는 오류';
+    if(err instanceof TypeError || msg.includes('Failed to fetch')){
+      msg = '네트워크 오류 또는 CORS 차단으로 요청이 실패했습니다. API 서버가 브라우저 요청을 허용하는지 확인해주세요.';
+    }
+    CATEGORIES.forEach(cat => {
+      document.getElementById('list-'+cat.key).innerHTML = `<div class="error-box">${escapeHtml(msg)}<div class="retry"><button class="btn icon-only" onclick="fetchAll()">⟳ 다시 시도</button></div></div>`;
+      document.getElementById('count-'+cat.key).textContent = '오류';
+      delete state.counts[cat.key];
+      setDot(cat.key, 'err');
+    });
+    updateTotals();
+  }
+
+  const now = new Date();
+  const timeStr = now.toLocaleString('ko-KR', { hour:'2-digit', minute:'2-digit', month:'2-digit', day:'2-digit' });
+  document.getElementById('syncTime').innerHTML = '마지막 동기화<span>' + timeStr + '</span>';
+}
+
+document.getElementById('refreshAllBtn').addEventListener('click', fetchAll);
+
+const settingsPanel = document.getElementById('settingsPanel');
+document.getElementById('settingsBtn').addEventListener('click', () => settingsPanel.classList.toggle('open'));
+document.getElementById('closeSettingsBtn').addEventListener('click', () => settingsPanel.classList.remove('open'));
+document.getElementById('togglePw').addEventListener('click', () => {
+  const el = document.getElementById('apiKey');
+  el.type = el.type === 'password' ? 'text' : 'password';
+});
+
+document.getElementById('saveSettingsBtn').addEventListener('click', () => {
+  state.apiBase = document.getElementById('apiBase').value.trim();
+  state.apiKey = document.getElementById('apiKey').value.trim();
+  state.endpointPath = document.getElementById('endpointPath').value.trim() || '/workflows/run';
+  state.user = document.getElementById('userId').value.trim() || 'policy-dashboard';
+  settingsPanel.classList.remove('open');
+  fetchAll();
+});
+
+updateTotals();
+fetchAll();
+</script>
+</body>
+</html>
